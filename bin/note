@@ -1,0 +1,184 @@
+#!/usr/bin/env perl
+#
+# note - simple note editor
+#
+
+use strict;
+use warnings;
+
+use Notepad::Search;
+use Notepad::Editor;
+use Curses::UI;
+use File::Basename;
+use File::Path qw(make_path);
+
+my $debug = 0;
+my $datadir = $ENV{HOME} . '/git/notes';
+my $suffix = '.mkd';
+
+my $search = Notepad::Search->new( path => $datadir );
+my $editor = Notepad::Editor->new();
+
+my $cui = Curses::UI->new(
+    -clear_on_exit => 0,
+    -debug => $debug,
+);
+
+sub refresh_pattern {
+    my $text = shift;
+    my $list = shift;
+
+    my $cur_val = $list->get();
+    if ( not defined $cur_val ) {
+        $cur_val = '';
+    }
+    my $cur_id = $list->id();
+    if ( not defined $cur_id ) {
+        $cur_id = 0;
+    }
+
+    #warn "\nDEBUG: refresh_pattern(", $text->get(), ")";
+    #warn "DEBUG: cur_val=$cur_val, cur_id=$cur_id";
+
+    my $results = $search->get( { pattern => $text->get() } );
+    if ( not $results and ref($results) ne 'ArrayRef' ) {
+        warn "DEBUG: no files found\n";
+    }
+
+    my $new_values = [];
+    my $new_labels = {};
+    #my $new_id = $cur_id;
+    my $new_id = 0;
+    my $i = 0;
+    foreach my $rec ( @{ $results } ) {
+        #warn "DEBUG: ", $rec->{file}, ': ', $rec->{line}, "\n";
+        push @{ $new_values }, $rec->{file};
+        #$new_labels->{ $rec->{file} } = $rec->{line};
+        my $file_short = substr($rec->{file}, length($datadir) + 1);
+        $file_short =~ s{\.[^.]+?$}{};
+        $new_labels->{ $rec->{file} } = $file_short;
+        if ( $rec->{file} eq $cur_val ) {
+            $new_id = $i;
+        }
+        $i++;
+    }
+    $list->values( $new_values );
+    $list->labels( $new_labels );
+    $list->set_selection( $new_id );
+    $list->draw();
+    $text->focus();
+}
+
+sub move_list_sel {
+    my $list = shift;
+    my $text = shift;
+    my $inc = shift; # +/- 1
+
+    my $pos = $list->id();
+    if ( not defined $pos ) {
+        warn "forcing pos=0";
+        $pos = 0;
+    }
+    my $max = scalar @{ $list->values() };
+    my $newpos = $pos + $inc;
+    #warn "move_list_sel() pos=$pos, max=$max, inc=$inc, newpos=$newpos";
+    if ( $max == 0 ) {
+        # always force to 0 if list is empty
+        $newpos = 0;
+        #warn "adjusted newpos=$newpos";
+    } elsif ( $newpos < 0 ) {
+        $newpos = 0;
+        #warn "adjusted newpos=$newpos";
+    } elsif ( $newpos >= $max ) {
+        $newpos = $max - 1;
+        #warn "adjusted newpos=$newpos";
+    }
+    #warn "move_list_sel() Move selection to $newpos";
+    $list->set_selection( $newpos );
+    $list->draw();
+    $text->draw();
+    $text->focus();
+}
+
+sub start_edit {
+    my $win = shift;
+    my $list = shift;
+    my $text = shift;
+
+    my $filename;
+
+    my $cur_val = $list->get();
+    warn "start_edit() cur_val=$cur_val";
+    if ( not defined $cur_val ) {
+        my $cur_txt = $text->get();
+        if ( not $cur_txt ) {
+            warn "No file or selection specified";
+            return;
+        }
+        $filename = $datadir . '/' . $cur_txt . $suffix;
+        my $dirname = dirname($filename);
+        if ( not -d $dirname ) {
+            make_path($dirname);
+        }
+    } else {
+        $filename = $cur_val;
+    }
+
+    warn "start_edit() filename=$filename";
+    $win->leave_curses();
+    $editor->run( { file => $filename } );
+    if ( -d $datadir . '/.git' ) {
+        system('git', 'add', $filename);
+        system('git', 'commit', '-m', '(auto entry) ' . $filename);
+    }
+    $win->reset_curses();
+    $win->draw();
+    refresh_pattern($text, $list);
+}
+
+my $win1 = $cui->add(
+    'win1', 'Window',
+#    -border => 1,
+#    -y => 1, # leave space for menubar
+#    -bfg => 'red',
+);
+
+my $list1;
+
+my $text1 = $win1->add(
+    'text', 'TextEntry',
+#    -text => "Here is some text",
+    -onchange => sub { refresh_pattern(shift, $list1); },
+);
+
+$list1 = $win1->add(
+    'list1', 'Listbox',
+#    -values => [1, 2, 3],
+#    -labels => { 1 => 'One',
+#        2 => 'Two',
+#        3 => 'Three',
+#    },
+    -y => 2,
+#    -radio => 1,
+);
+
+
+$cui->status("This is the status line.");
+$cui->set_binding( sub { exit(0); }, "\cQ");
+$cui->set_binding( sub { exit(0); }, "\cC");
+$cui->set_binding( sub { $text1->get(); }, "\cK");
+$cui->set_binding( sub {
+        move_list_sel( $list1, $text1, +1 );
+    }, 258); # ArrowDn
+$cui->set_binding( sub {
+        move_list_sel( $list1, $text1, -1 );
+    }, 259); # ArrowUp
+$cui->set_binding( sub {
+        start_edit( $cui, $list1, $text1 ); }, 343); # Enter
+
+
+$text1->focus();
+
+$cui->mainloop;
+
+
