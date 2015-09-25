@@ -3,17 +3,17 @@ package Notepad::Editor;
 use Moose;
 
 has 'editor' => (
-    is => 'rw',
+    is      => 'rw',
     default => 'vi',
 );
 
 has 'debug' => (
-    is => 'rw',
+    is      => 'rw',
     default => 0,
 );
 
 has 'editoropts' => (
-    is => 'rw',
+    is  => 'rw',
     isa => 'Maybe[ArrayRef[Str]]',
 );
 
@@ -24,15 +24,14 @@ sub run {
     my @cmd = ();
     push @cmd, $self->editor() || die "ERR: editor not specified";
     my $opts = $self->editoropts();
-    if ( ref($opts) and scalar( @{ $opts } ) ) {
-        push @cmd, @{ $opts };
+    if ( ref($opts) and scalar( @{$opts} ) ) {
+        push @cmd, @{$opts};
     }
     push @cmd, $args->{file};
-    warn "# run: cmd = ", join(', ', @cmd), "\n" if $self->debug();
+    warn "# run: cmd = ", join( ', ', @cmd ), "\n" if $self->debug();
     system(@cmd);
     return $? == 0 ? 1 : 0;
 }
-    
-1;
 
+1;
 

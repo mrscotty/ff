@@ -108,7 +108,7 @@ sub start_edit {
     my $filename;
 
     my $cur_val = $list->get();
-    warn "start_edit() cur_val=$cur_val";
+    #warn "start_edit() cur_val=$cur_val";
     if ( not defined $cur_val ) {
         my $cur_txt = $text->get();
         if ( not $cur_txt ) {
@@ -124,7 +124,7 @@ sub start_edit {
         $filename = $cur_val;
     }
 
-    warn "start_edit() filename=$filename";
+    #warn "start_edit() filename=$filename";
     $win->leave_curses();
     $editor->run( { file => $filename } );
     if ( -d $datadir . '/.git' ) {
@@ -166,7 +166,7 @@ $list1 = $win1->add(
 $cui->status("This is the status line.");
 $cui->set_binding( sub { exit(0); }, "\cQ");
 $cui->set_binding( sub { exit(0); }, "\cC");
-$cui->set_binding( sub { $text1->get(); }, "\cK");
+$cui->set_binding( sub { $text1->text(''); refresh_pattern($text1, $list1); }, "\cK");
 $cui->set_binding( sub {
         move_list_sel( $list1, $text1, +1 );
     }, 258); # ArrowDn

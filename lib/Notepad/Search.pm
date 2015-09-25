@@ -4,61 +4,79 @@ use Moose;
 use File::Find;
 
 has 'path' => (
-    is => 'rw',
+    is      => 'rw',
     default => $ENV{HOME} . '/Notes',
 );
 
 sub get {
-    my $self = shift;
-    my $args = shift;
+    my $self    = shift;
+    my $args    = shift;
     my $results = [];
 
-    my $path = $self->path();
+    my $path    = $self->path();
     my $pattern = $args->{pattern};
-    my $type = $args->{type} || 'file';
+
+    my $pathlen = length($path);
 
     if ( not defined $pattern ) {
         $pattern = '';
     }
 
-    if ( $type eq 'data' ) {
-        # this is dirty... very dirty...
-        # TODO: Either do the find and grep in pure perl or perhaps
-        # use 'git grep' to take advantage of the git internal 
-        # indexing
-    #    warn "# search pattern = $pattern";
-        open(GREP, "find $path -type f -print0 | xargs -0 grep -i '$pattern' |") or die "Error running search command: $!";
-        while (my $line = <GREP>) {
-            chomp $line;
-            my ($file, $data) = split(/:/, $line, 2);
-            push @{ $results },  { file => $file, line => $data };
-        }
-        return $results;
-    } elsif ( $type eq 'file' ) {
-        # this is dirty... very dirty...
-        find( sub {
-                if ( -f $File::Find::name ) {
-                    # Exclude ALL hidden files
-                    if ( $_ =~ m{^\.} ) {
-                        return;
-                    }
-#                    warn "# checking $File::Find::name for pattern $pattern...";
-                    if ( $pattern and (not $File::Find::name =~ m{$pattern}i) ) {
-#                        warn "DEBUG: skipping '$File::Find::name' (no pattern match)";
-                    } else {
-                        push @{ $results }, {
+    # this is dirty... very dirty...
+    # but it takes care of matches in both filename and contents
+
+    find(
+        sub {
+            # Skip dirs, symlinks and dot-files
+            if ( $_ =~ m{^\.} ) {
+
+                #warn "# skipping dot-file '$_'";
+                return;
+            }
+            if ( not -f $_ ) {
+
+                #warn "# dir = ", `pwd`;
+                #warn "# skipping non-file '$File::Find::name'";
+                return;
+            }
+
+            # match filename
+            if ( $_ =~ m{$pattern}i ) {
+
+                #warn "# grep: '$_' matches pattern '$pattern'";
+                push @{$results},
+                    {
+                    file => $File::Find::name,
+                    line => substr( $File::Find::name, $pathlen )
+                    };
+            }
+            else {
+                if ( not open( FILE, $_ ) ) {
+                    warn "Error opening $File::Find::name: $!\n";
+                    return;
+                }
+                while ( my $line = <FILE> ) {
+
+                    #warn "# Checking line '$line' for pattern '$pattern'";
+                    if ( $line =~ m{$pattern}i ) {
+
+                        #warn "# MATCH line '$line' for pattern '$pattern'";
+                        push @{$results},
+                            {
                             file => $File::Find::name,
-                        };
+                            line => substr( $File::Find::name, $pathlen )
+                            };
+                        last;
                     }
-                };
-            }, $path
-        );
-        return $results;
-    }
-    return;
+                }
+                close FILE;
+            }
+        },
+        $path
+    );
+
+    return $results;
 }
 
-
 1;
-
 
