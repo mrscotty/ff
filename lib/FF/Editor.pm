@@ -1,4 +1,4 @@
-package Notepad::Editor;
+package FF::Editor;
 
 use Moose;
 

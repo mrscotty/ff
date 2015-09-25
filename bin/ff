@@ -1,23 +1,23 @@
 #!/usr/bin/env perl
 #
-# note - simple note editor
+# ff - simple note-taking editor
 #
 
 use strict;
 use warnings;
 
-use Notepad::Search;
-use Notepad::Editor;
+use FF::Search;
+use FF::Editor;
 use Curses::UI;
 use File::Basename;
 use File::Path qw(make_path);
 
 my $debug = 0;
-my $datadir = $ENV{HOME} . '/git/notes';
+my $datadir = $ENV{HOME} . '/ff';
 my $suffix = '.mkd';
 
-my $search = Notepad::Search->new( path => $datadir );
-my $editor = Notepad::Editor->new();
+my $search = FF::Search->new( path => $datadir );
+my $editor = FF::Editor->new();
 
 my $cui = Curses::UI->new(
     -clear_on_exit => 0,

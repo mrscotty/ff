@@ -6,14 +6,14 @@ use warnings;
 
 use Test::More;
 use Data::Dumper;
-use Notepad::Search;
+use FF::Search;
 
-my $s_default = Notepad::Search->new();
-isa_ok( $s_default, 'Notepad::Search' );
+my $s_default = FF::Search->new();
+isa_ok( $s_default, 'FF::Search' );
 is($s_default->path, $ENV{'HOME'} . '/Notes', 'default path set properly at init');
 
-my $search = Notepad::Search->new(path => 't/test.d');
-isa_ok( $search, 'Notepad::Search' );
+my $search = FF::Search->new(path => 't/test.d');
+isa_ok( $search, 'FF::Search' );
 is($search->path, 't/test.d', 'path set properly at init');
 
 # This should return exactly one file entry named '01_unique_for_one_file'

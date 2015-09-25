@@ -1,0 +1,42 @@
+# FF
+
+A note-taking tool for the UNIX terminal
+
+# Overview
+
+FF is a simple note-taking tool for the UNIX terminal. It is written
+in Perl and uses the Curses::UI module from CPAN.
+
+# Usage
+
+To run FF, just run the command:
+
+    ff
+
+The cursor will be on the first line and the following screen will appear:
+
+    --------------------------------------------------
+    |                                                | 
+    |                                                |
+    |- no values -                                   |
+    --------------------------------------------------
+
+As you sart typing, the matching files will appear:
+
+    --------------------------------------------------
+    |walk                                            |
+    |                                                |
+    |chores                                          |
+    |pet care                                        |
+    |vacation                                        |
+    --------------------------------------------------
+
+Use the up and down keys to select the entry and press enter. The file
+will be opened in the editor (as set in EDITOR environment variable).
+
+# Credits, Related Work
+
+FF is directly inspired by Terminal Velocity
+
+    [http://seanh.github.io/terminal_velocity/] 
+

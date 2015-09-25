@@ -1,11 +1,11 @@
-package Notepad::Search;
+package FF::Search;
 
 use Moose;
 use File::Find;
 
 has 'path' => (
     is      => 'rw',
-    default => $ENV{HOME} . '/Notes',
+    default => $ENV{HOME} . '/ff',
 );
 
 sub get {

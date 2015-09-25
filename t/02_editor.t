@@ -6,7 +6,7 @@ use warnings;
 
 use Test::More;
 use Data::Dumper;
-use Notepad::Editor;
+use FF::Editor;
 
 sub cat {
     my $file = shift;
@@ -16,11 +16,11 @@ sub cat {
     return $data;
 }
 
-my $editor = Notepad::Editor->new();
-isa_ok( $editor, 'Notepad::Editor' );
+my $editor = FF::Editor->new();
+isa_ok( $editor, 'FF::Editor' );
 is($editor->editor, 'vi', 'default editor set properly at init');
 
-$editor = Notepad::Editor->new( editor => 't/editor.sh' );
+$editor = FF::Editor->new( editor => 't/editor.sh' );
 is($editor->editor, 't/editor.sh', 'explicit editor set properly at init');
 
 $ENV{TEST_EDIT} = "The text is caf038cc618a1776c2d2";
@@ -39,8 +39,8 @@ done_testing;
 
 __END__
 
-my $search = Notepad::Editor->new(path => 't/01_search.d');
-isa_ok( $search, 'Notepad::Editor' );
+my $search = FF::Editor->new(path => 't/01_search.d');
+isa_ok( $search, 'FF::Editor' );
 is($search->path, 't/01_search.d', 'path set properly at init');
 
 # This should return exactly one file entry named '01_unique_for_one_file'
