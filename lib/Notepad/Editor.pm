@@ -4,7 +4,7 @@ use Moose;
 
 has 'editor' => (
     is      => 'rw',
-    default => 'vi',
+    default => $ENV{EDITOR} || 'vi',
 );
 
 has 'debug' => (
